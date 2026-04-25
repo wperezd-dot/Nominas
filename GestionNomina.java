@@ -4,8 +4,8 @@ import java.util.Scanner;
 import java.util.InputMismatchException;
 
 /**
- * SISTEMA DE NÓMINA PROFESIONAL - CIPA
- * Incluye validación de nombres únicos y restricciones de seguridad.
+ * Validaciones: Nombres únicos (solo letras), máximo 90 años de antigüedad,
+ * máximo 450 horas mensuales y bloqueo de valores negativos.
  */
 abstract class Empleado {
     protected String nombre;
@@ -104,14 +104,10 @@ public class GestionNomina {
         while (true) {
             System.out.print(mensaje);
             String entrada = sc.nextLine().trim();
-            
-            // 1. Verificar que sean solo letras
             if (!entrada.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$") || entrada.isEmpty()) {
                 System.out.println("¡ERROR! El nombre solo puede contener letras.");
                 continue;
             }
-
-            // 2. Verificar que no esté repetido
             boolean repetido = false;
             for (Empleado e : lista) {
                 if (e.getNombre().equalsIgnoreCase(entrada)) {
@@ -119,12 +115,8 @@ public class GestionNomina {
                     break;
                 }
             }
-
-            if (repetido) {
-                System.out.println("¡ERROR! Ya existe un empleado registrado con el nombre: " + entrada);
-            } else {
-                return entrada;
-            }
+            if (repetido) System.out.println("¡ERROR! Ya existe un empleado con ese nombre.");
+            else return entrada;
         }
     }
 
@@ -143,13 +135,29 @@ public class GestionNomina {
         }
     }
 
+    // VALIDACIÓN: Rango de horas (0 - 450)
+    private static int leerHorasMensuales(String mensaje) {
+        while (true) {
+            try {
+                System.out.print(mensaje);
+                int valor = sc.nextInt();
+                if (valor >= 0 && valor <= 450) return valor;
+                if (valor < 0) System.out.println("¡ERROR! Las horas no pueden ser negativas.");
+                else System.out.println("¡ERROR! No se pueden trabajar más de 450 horas al mes.");
+            } catch (InputMismatchException e) {
+                System.out.println("¡ERROR! Ingrese un número entero.");
+                sc.next();
+            }
+        }
+    }
+
     private static int leerAnosEmpresa(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
                 int valor = sc.nextInt();
                 if (valor >= 0 && valor <= 90) return valor;
-                if (valor < 0) System.out.println("¡ERROR! Los años no pueden ser negativos.");
+                if (valor < 0) System.out.println("¡ERROR! No se permiten negativos.");
                 else System.out.println("¡ERROR! El límite máximo es 90 años.");
             } catch (InputMismatchException e) {
                 System.out.println("¡ERROR! Ingrese un número entero.");
@@ -182,12 +190,11 @@ public class GestionNomina {
             System.out.println("4. Mostrar Reporte de Nómina");
             System.out.println("5. Salir");
             opcion = leerOpcion("Seleccione una opción: ");
-            sc.nextLine(); // Limpiar buffer
+            sc.nextLine();
 
             if (opcion >= 1 && opcion <= 3) {
-                // Se pasa la lista al validador para comprobar duplicados
                 String nombre = leerNombreUnico("Nombre completo: ", listaEmpleados);
-                int anos = leerAnosEmpresa("Años en la empresa (Máximo 90): ");
+                int anos = leerAnosEmpresa("Años en la empresa: ");
 
                 switch (opcion) {
                     case 1 -> {
@@ -196,7 +203,7 @@ public class GestionNomina {
                     }
                     case 2 -> {
                         double tarifa = leerNumeroPositivo("Tarifa por hora: ");
-                        int hrs = (int) leerNumeroPositivo("Horas trabajadas: ");
+                        int hrs = leerHorasMensuales("Horas trabajadas en el mes (Máximo 450): ");
                         System.out.print("¿Acepta fondo de ahorro? (true/false): ");
                         while(!sc.hasNextBoolean()) {
                             System.out.println("¡ERROR! Responda true o false.");
@@ -211,7 +218,7 @@ public class GestionNomina {
                         listaEmpleados.add(new EmpleadoComision(nombre, anos, base, vtas));
                     }
                 }
-                sc.nextLine(); // Limpiar buffer
+                sc.nextLine();
                 System.out.println(">> Empleado registrado correctamente.");
             } else if (opcion == 4) {
                 if (listaEmpleados.isEmpty()) {
@@ -227,7 +234,6 @@ public class GestionNomina {
                 }
             }
         } while (opcion != 5);
-        
         System.out.println("Saliendo del sistema...");
     }
 }
