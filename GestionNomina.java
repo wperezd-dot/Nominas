@@ -4,7 +4,8 @@ import java.util.Scanner;
 import java.util.InputMismatchException;
 
 /**
- * PRINCIPIOS SOLID Y CÓDIGO LIMPIO - CIPA
+ * SISTEMA DE NÓMINA PROFESIONAL - CIPA
+ * Aplica SOLID, Código Limpio y Validaciones de Seguridad.
  */
 abstract class Empleado {
     protected String nombre;
@@ -19,13 +20,13 @@ abstract class Empleado {
     public abstract double calcularSalarioBruto();
 
     public double calcularDeducciones() {
-        return calcularSalarioBruto() * 0.04; // Seguro y Pensión
+        return calcularSalarioBruto() * 0.04; // Seguro Social y Pensión (4%)
     }
 
     public double calcularSalarioNeto() {
         double bruto = calcularSalarioBruto();
         double neto = bruto - calcularDeducciones();
-        return Math.max(neto, 0); 
+        return Math.max(neto, 0); // Validación: No neto negativo
     }
 }
 
@@ -43,7 +44,7 @@ class EmpleadoAsalariado extends Empleado {
     @Override
     public double calcularSalarioBruto() {
         double bono = (anosAntiguedad > 5) ? salarioFijo * 0.10 : 0;
-        return salarioFijo + bono + 1000000; // Bono Alimentación
+        return salarioFijo + bono + 1000000; // Salario + Bono Antigüedad + Bono Alimentación
     }
 }
 
@@ -65,7 +66,7 @@ class EmpleadoPorHoras extends Empleado {
     @Override
     public double calcularSalarioBruto() {
         double pago = (horas > 40) ? (40 * tarifaHora) + ((horas - 40) * tarifaHora * 1.5) : horas * tarifaHora;
-        if (anosAntiguedad > 1 && aceptaFondo) pago -= (pago * 0.02);
+        if (anosAntiguedad > 1 && aceptaFondo) pago -= (pago * 0.02); // Fondo de ahorro
         return pago;
     }
 }
@@ -86,8 +87,8 @@ class EmpleadoComision extends Empleado {
     @Override
     public double calcularSalarioBruto() {
         double comision = ventas * 0.05; 
-        if (ventas > 20000000) comision += (ventas * 0.03);
-        return salarioBase + comision + 1000000;
+        if (ventas > 20000000) comision += (ventas * 0.03); // Bono adicional si ventas > 20M
+        return salarioBase + comision + 1000000; // Incluye Bono Alimentación
     }
 }
 
@@ -99,15 +100,15 @@ public class GestionNomina {
         while (true) {
             System.out.print(mensaje);
             String entrada = sc.nextLine().trim();
-            if (entrada.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
+            if (entrada.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$") && !entrada.isEmpty()) {
                 return entrada;
             } else {
-                System.out.println("¡ERROR! El nombre solo puede contener letras.");
+                System.out.println("¡ERROR! El nombre solo puede contener letras y no puede estar vacío.");
             }
         }
     }
 
-    // VALIDACIÓN: Solo números positivos
+    // VALIDACIÓN: Números positivos para dinero
     private static double leerNumeroPositivo(String mensaje) {
         while (true) {
             try {
@@ -123,7 +124,23 @@ public class GestionNomina {
         }
     }
 
-    // VALIDACIÓN: Solo enteros positivos
+    // VALIDACIÓN: Años con límite de 90
+    private static int leerAnosEmpresa(String mensaje) {
+        while (true) {
+            try {
+                System.out.print(mensaje);
+                int valor = sc.nextInt();
+                if (valor >= 0 && valor <= 90) return valor;
+                if (valor < 0) System.out.println("¡ERROR! Los años no pueden ser negativos.");
+                else System.out.println("¡ERROR! El límite máximo permitido es de 90 años.");
+            } catch (InputMismatchException e) {
+                System.out.println("¡ERROR! Ingrese un número entero.");
+                sc.next();
+            }
+        }
+    }
+
+    // VALIDACIÓN: Solo enteros positivos para opciones
     private static int leerEnteroPositivo(String mensaje) {
         while (true) {
             try {
@@ -143,7 +160,7 @@ public class GestionNomina {
         int opcion;
 
         do {
-            System.out.println("\n--- SISTEMA DE NÓMINA - CIPA ---");
+            System.out.println("\n--- SISTEMA DE NÓMINA - CIPA #4 ---");
             System.out.println("1. Agregar Empleado Asalariado");
             System.out.println("2. Agregar Empleado por Horas");
             System.out.println("3. Agregar Empleado por Comisión");
@@ -154,7 +171,7 @@ public class GestionNomina {
 
             if (opcion >= 1 && opcion <= 3) {
                 String nombre = leerNombre("Nombre completo: ");
-                int anos = leerEnteroPositivo("Años en la empresa: ");
+                int anos = leerAnosEmpresa("Años en la empresa (Máximo 90): ");
 
                 switch (opcion) {
                     case 1 -> {
@@ -166,7 +183,7 @@ public class GestionNomina {
                         int hrs = leerEnteroPositivo("Horas trabajadas: ");
                         System.out.print("¿Acepta fondo de ahorro? (true/false): ");
                         while(!sc.hasNextBoolean()) {
-                            System.out.println("¡ERROR! Responda true o false.");
+                            System.out.println("¡ERROR! Responda solo true o false.");
                             sc.next();
                         }
                         boolean fondo = sc.nextBoolean();
@@ -178,7 +195,7 @@ public class GestionNomina {
                         listaEmpleados.add(new EmpleadoComision(nombre, anos, base, vtas));
                     }
                 }
-                sc.nextLine(); // Limpiar buffer después de nextBoolean/nextInt
+                sc.nextLine(); // Limpiar buffer final
                 System.out.println(">> Empleado registrado correctamente.");
             } else if (opcion == 4) {
                 System.out.println("\n====================================================================");
