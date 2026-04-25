@@ -4,7 +4,7 @@ import java.util.Scanner;
 import java.util.InputMismatchException;
 
 /**
- *  PRINCIPIOS SOLID Y CÓDIGO LIMPIO
+ * PRINCIPIOS SOLID Y CÓDIGO LIMPIO - CIPA
  */
 abstract class Empleado {
     protected String nombre;
@@ -15,18 +15,17 @@ abstract class Empleado {
         this.anosAntiguedad = anosAntiguedad;
     }
 
-    // Nuevo método para identificar el tipo de contrato en el reporte
     public abstract String getTipoEmpleado();
     public abstract double calcularSalarioBruto();
 
     public double calcularDeducciones() {
-        return calcularSalarioBruto() * 0.04; // [cite: 35] Seguro y Pensión
+        return calcularSalarioBruto() * 0.04; // Seguro y Pensión
     }
 
     public double calcularSalarioNeto() {
         double bruto = calcularSalarioBruto();
         double neto = bruto - calcularDeducciones();
-        return Math.max(neto, 0); // [cite: 47] Validación: No neto negativo
+        return Math.max(neto, 0); 
     }
 }
 
@@ -43,8 +42,8 @@ class EmpleadoAsalariado extends Empleado {
 
     @Override
     public double calcularSalarioBruto() {
-        double bono = (anosAntiguedad > 5) ? salarioFijo * 0.10 : 0; // [cite: 16]
-        return salarioFijo + bono + 1000000; // [cite: 42] Bono Alimentación
+        double bono = (anosAntiguedad > 5) ? salarioFijo * 0.10 : 0;
+        return salarioFijo + bono + 1000000; // Bono Alimentación
     }
 }
 
@@ -65,8 +64,8 @@ class EmpleadoPorHoras extends Empleado {
 
     @Override
     public double calcularSalarioBruto() {
-        double pago = (horas > 40) ? (40 * tarifaHora) + ((horas - 40) * tarifaHora * 1.5) : horas * tarifaHora; // [cite: 19]
-        if (anosAntiguedad > 1 && aceptaFondo) pago -= (pago * 0.02); // [cite: 45]
+        double pago = (horas > 40) ? (40 * tarifaHora) + ((horas - 40) * tarifaHora * 1.5) : horas * tarifaHora;
+        if (anosAntiguedad > 1 && aceptaFondo) pago -= (pago * 0.02);
         return pago;
     }
 }
@@ -87,34 +86,53 @@ class EmpleadoComision extends Empleado {
     @Override
     public double calcularSalarioBruto() {
         double comision = ventas * 0.05; 
-        if (ventas > 20000000) comision += (ventas * 0.03); // [cite: 28]
-        return salarioBase + comision + 1000000; // [cite: 42]
+        if (ventas > 20000000) comision += (ventas * 0.03);
+        return salarioBase + comision + 1000000;
     }
 }
 
 public class GestionNomina {
     private static Scanner sc = new Scanner(System.in);
 
-    private static double leerNumero(String mensaje) {
+    // VALIDACIÓN: Solo letras y espacios
+    private static String leerNombre(String mensaje) {
+        while (true) {
+            System.out.print(mensaje);
+            String entrada = sc.nextLine().trim();
+            if (entrada.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
+                return entrada;
+            } else {
+                System.out.println("¡ERROR! El nombre solo puede contener letras.");
+            }
+        }
+    }
+
+    // VALIDACIÓN: Solo números positivos
+    private static double leerNumeroPositivo(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
-                String entrada = sc.next().replace(".", "").replace(",", "."); // Manejo de puntos/comas
-                return Double.parseDouble(entrada);
+                String entrada = sc.next().replace(".", "").replace(",", ".");
+                double valor = Double.parseDouble(entrada);
+                if (valor >= 0) return valor;
+                System.out.println("¡ERROR! El valor no puede ser negativo.");
             } catch (Exception e) {
-                System.out.println("¡ERROR! Ingrese un valor numérico válido.");
+                System.out.println("¡ERROR! Ingrese un número válido.");
                 sc.nextLine();
             }
         }
     }
 
-    private static int leerEntero(String mensaje) {
+    // VALIDACIÓN: Solo enteros positivos
+    private static int leerEnteroPositivo(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
-                return sc.nextInt();
+                int valor = sc.nextInt();
+                if (valor >= 0) return valor;
+                System.out.println("¡ERROR! No se permiten números negativos.");
             } catch (InputMismatchException e) {
-                System.out.println("¡ERROR! Ingrese solo el número.");
+                System.out.println("¡ERROR! Ingrese un número entero.");
                 sc.next();
             }
         }
@@ -125,38 +143,42 @@ public class GestionNomina {
         int opcion;
 
         do {
-            System.out.println("\n--- SISTEMA DE NÓMINA - CIPA #4 ---");
+            System.out.println("\n--- SISTEMA DE NÓMINA - CIPA ---");
             System.out.println("1. Agregar Empleado Asalariado");
             System.out.println("2. Agregar Empleado por Horas");
             System.out.println("3. Agregar Empleado por Comisión");
             System.out.println("4. Mostrar Reporte de Nómina");
             System.out.println("5. Salir");
-            opcion = leerEntero("Seleccione una opción: ");
-            sc.nextLine();
+            opcion = leerEnteroPositivo("Seleccione una opción: ");
+            sc.nextLine(); // Limpiar buffer
 
             if (opcion >= 1 && opcion <= 3) {
-                System.out.print("Nombre completo: ");
-                String nombre = sc.nextLine();
-                int anos = leerEntero("Años en la empresa: ");
+                String nombre = leerNombre("Nombre completo: ");
+                int anos = leerEnteroPositivo("Años en la empresa: ");
 
                 switch (opcion) {
                     case 1 -> {
-                        double sueldo = leerNumero("Salario mensual fijo: ");
+                        double sueldo = leerNumeroPositivo("Salario mensual fijo: ");
                         listaEmpleados.add(new EmpleadoAsalariado(nombre, anos, sueldo));
                     }
                     case 2 -> {
-                        double tarifa = leerNumero("Tarifa por hora: ");
-                        int hrs = leerEntero("Horas trabajadas: ");
+                        double tarifa = leerNumeroPositivo("Tarifa por hora: ");
+                        int hrs = leerEnteroPositivo("Horas trabajadas: ");
                         System.out.print("¿Acepta fondo de ahorro? (true/false): ");
+                        while(!sc.hasNextBoolean()) {
+                            System.out.println("¡ERROR! Responda true o false.");
+                            sc.next();
+                        }
                         boolean fondo = sc.nextBoolean();
                         listaEmpleados.add(new EmpleadoPorHoras(nombre, anos, tarifa, hrs, fondo));
                     }
                     case 3 -> {
-                        double base = leerNumero("Salario base: ");
-                        double vtas = leerNumero("Total ventas del mes: ");
+                        double base = leerNumeroPositivo("Salario base: ");
+                        double vtas = leerNumeroPositivo("Total ventas del mes: ");
                         listaEmpleados.add(new EmpleadoComision(nombre, anos, base, vtas));
                     }
                 }
+                sc.nextLine(); // Limpiar buffer después de nextBoolean/nextInt
                 System.out.println(">> Empleado registrado correctamente.");
             } else if (opcion == 4) {
                 System.out.println("\n====================================================================");
@@ -168,5 +190,7 @@ public class GestionNomina {
                 System.out.println("====================================================================");
             }
         } while (opcion != 5);
+        
+        System.out.println("Cerrando sistema...");
     }
 }
